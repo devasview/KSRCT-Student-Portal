@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { 
+      --ks-blue: #002D62; 
+      --ks-orange: #F37021; 
+      --bg: #F3F4F6; 
+      --card: #FFFFFF; 
+      --text: #1F2937; 
+      --border: #E5E7EB; 
+      
+    }
+    [data-theme="dark"] { 
+      --bg: #0F172A; 
+      --card: #1E293B; 
+      --text: #F8FAFC; 
+      --border: #334155; 
+    }
+    /* This makes the birthday cake emoji bounce gently */
+.bday-icon {
+  display: inline-block;
+  animation: bounce 2s infinite;
+  margin-left: 5px;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+    /* Disable text selection across the entire portal */
+body {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and older */
+  user-select: none; /* Standard syntax */
+}
+
+/* Allow selection ONLY in input fields and textareas */
+/* (So students can still type their Reg No and Feedback) */
+input, textarea {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      transition: 0.3s ease; 
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hidden { display: none !important; }
+
+    /* --- SPLASH SCREEN --- */
+    #splashScreen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--ks-blue);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 5000; transition: 0.5s ease-out;
+    }
+    .splash-logo { width: 100px; height: auto; animation: pulse 2s infinite ease-in-out; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+
+    /* Pulsing Green for Live Status */
+.status-live {
+  background-color: #22c55e !important;
+  box-shadow: 0 0 8px #22c55e;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Static Red for Offline */
+.status-offline {
+  background-color: #ef4444 !important;
+}
+
+    /* --- HEADER --- */
+    .top-bar { background: #001a3a; color: white; padding: 6px 24px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; font-weight: 500; flex-shrink: 0; }
+    .portal-header { background: white; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--ks-orange); width: 100%; box-sizing: border-box; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex-shrink: 0; }
+    .header-brand { display: flex; align-items: center; gap: 12px; }
+    .header-brand img { height: 50px; }
+    .brand-text { border-left: 2px solid #ddd; padding-left: 12px; }
+    .brand-text h2 { margin: 0; font-size: 15px; color: var(--ks-blue); font-weight: 800; line-height: 1; }
+    .brand-text p { margin: 2px 0 0 0; font-size: 10px; color: var(--ks-orange); font-weight: 700; text-transform: uppercase; }
+
+    /* --- VIEWS --- */
+    #loginView { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; background-color: var(--ks-blue); padding: 20px; box-sizing: border-box; overflow-y: auto; }
+    .login-card { background: #FFFFFF; width: 100%; max-width: 380px; padding: 30px; border-radius: 20px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    #portalView { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+    .nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .container { max-width: 800px; margin: 0 auto; padding: 20px; width: 100%; box-sizing: border-box; }
+
+    /* --- FOOTER --- */
+    .portal-footer { background: #111827; color: #ffffff; padding: 15px 20px; text-align: center; font-size: 12px; width: 100%; box-sizing: border-box; flex-shrink: 0; }
+    .footer-links a { color: var(--ks-orange); text-decoration: none; margin: 0 10px; font-weight: 600; }
+
+    /* --- COMPONENTS --- */
+    .input-field { width: 100%; padding: 12px; border: 1.5px solid #E5E7EB; border-radius: 10px; box-sizing: border-box; outline: none; background: #F9FAFB; font-family: inherit; color: #1F2937; }
+    .input-field {
+  background: rgba(255, 255, 255, 0.9) !important; /* Nearly solid white for readability */
+  color: #1F2937 !important; /* Dark text inside for contrast */
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  font-weight: 600;
+}
+
+/* Placeholder text (YYYY-MM-DD) */
+.input-field::placeholder {
+  color: #9CA3AF !important;
+}
+    .subject-card { background: var(--card); padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .grade-box { width: 70px; padding: 8px; border-radius: 8px; border: 2px solid var(--border); font-weight: 800; text-align: center; background: var(--card); color: var(--text); }
+    .grade-box.pass { color: #10B981; border-color: #10B981; }
+    .grade-box.fail { color: #EF4444; border-color: #EF4444; }
+
+/* Container that centers the whole button group on the screen */
+.footer-action-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+/* Base styles: Side-by-side on mobile */
+.button-container {
+  display: flex;
+  gap: 12px;
+  width: 90%; /* Standard mobile width */
+  max-width: 10000px; /* Laptop constraint */
+  box-sizing: border-box;
+}
+
+.summary-container {
+  background: var(--card);
+  padding: 15px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.sgpa-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 15px;
+}
+.sem-card small {
+  display: block;
+  font-size: 7px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+[id^="calcCG"] {
+  /* Makes the calculated CGPA numbers stand out slightly */
+  color: var(--ks-orange) !important;
+}
+.sem-card {
+  background: #F9FAFB;
+  padding: 10px 5px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid #F3F4F6;
+  transition: transform 0.2s;
+}
+
+.sem-card span { display: block; font-size: 9px; color: #6B7280; font-weight: 700; margin-bottom: 2px; }
+.sem-card strong { font-size: 12px; color: var(--ks-blue); }
+
+.cgpa-highlight-card {
+  background: linear-gradient(135deg, var(--ks-blue), #004a99);
+  color: white;
+  padding: 16px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+}
+
+.performance-tag {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Dark Mode support for the summary */
+[data-theme="dark"] .sem-card {
+  background: #0F172A;
+  border-color: #334155;
+}
+[data-theme="dark"] .sem-card strong { color: #F8FAFC; }
+
+
+/* MOBILE VIEW: Equal 50/50 split */
+@media (max-width: 768px) {
+  .button-container button {
+    flex: 1; 
+  }
+}
+
+/* LAPTOP VIEW: Feedback LEFT, Save RIGHT */
+@media (min-width: 769px) {
+  .button-container {
+    justify-content: space-between; /* Pushes buttons to edges of the 800px container */
+  }
+
+  .button-container button {
+    flex: none;      /* Stops stretching */
+    width: 200px;    /* Professional fixed size */
+  }
+}
+
+.feedback-btn {
+  background: #64748b !important; /* Professional Slate Grey */
+  color: white !important;
+  height: 50px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.save-btn {
+  background: #f97316 !important; /* KSR Orange */
+  color: white !important;
+  height: 50px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2); /* Optional glow */
+}
+    .feedback-btn:active, .save-btn:active { transform: scale(0.96); }
+    /* --- BUTTONS --- */
+    .btn-login { width: 100%; padding: 14px; background: var(--ks-blue); color: white; border: none; border-radius: 10px; font-weight: 700; margin-top: 25px; cursor: pointer; }
+    .btn-login:disabled { background: #9CA3AF; }
+    
+    .btn-modal-sec, .btn-modal-pri, .btn-modal-danger { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+    .btn-modal-sec { background: var(--border); color: var(--text); }
+    .btn-modal-pri { background: var(--ks-blue); color: white; }
+    .btn-modal-danger { background: #EF4444; color: white; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .modal { background: var(--card); padding: 25px; border-radius: 20px; width: 90%; max-width: 340px; text-align: center; color: var(--text); }
+    .spinner { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @media (max-width: 600px) { .top-bar, .header-right { display: none; } }
+
+    /* --- ADD THIS AT THE END OF YOUR STYLE SECTION --- */
+    
+    body {
+  /* This adds a professional campus-style background */
+  background: linear-gradient(rgba(0, 45, 98, 0.8), rgba(0, 45, 98, 0.8)), 
+              url('https://images.unsplash.com/photo-1523050853063-bd8012fec0c8?q=80&w=2070&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+    /* Override your existing login-card to add Glassmorphism */
+    .login-card { 
+  /* Make the background white but very transparent (0.1) */
+  background: rgba(255, 255, 255, 0.1) !important; 
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  
+  /* This thin white border is what creates the "glass edge" effect */
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+/* Make the main headings bright white */
+.login-card h1 {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.login-card span[title] {
+  color: #FF8C42 !important; /* A slightly brighter orange */
+  font-size: 14px;
+  margin-left: 5px;
+  text-shadow: 0 0 5px rgba(243, 112, 33, 0.4);
+}
+
+/* Make the 'REGISTRATION NUMBER' and 'DATE OF BIRTH' labels pop */
+.input-label {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 1 !important; /* Removes the "dull" faded look */
+}
+/* Brighten the 'Remember Me' text */
+label[for="rememberMe"] {
+  color: #F3F4F6 !important; /* Off-white for better visibility */
+  font-weight: 600;
+}
+    /* Error Shake Animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+    .apply-shake {
+      animation: shake 0.3s ease-in-out;
+      border: 2px solid #EF4444 !important;
+    }
+
+    <style>
+  /* ... your existing CSS ... */
+
+  /* PASTE THE NEW CODE HERE */
+  .academic-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .trend-col { text-align: center; }
+  /* Scoped styles for the Performance Trend */
+.academic-grid .stat-box {
+  padding: 5px 2px;
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+/* Force text to adapt to theme without changing global background */
+.academic-grid .stat-box.sgpa {
+  background: transparent; 
+  color: var(--text-color, inherit); /* Falls back to your existing text color */
+}
+
+.academic-grid .sem-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--ks-blue); /* Keeps your branding color */
+  opacity: 0.8;
+}
+
+/* Ensure the numbers are always visible regardless of theme */
+.stat-box strong {
+  font-size: 12px;
+  color: var(--text-color, #1e293b); 
+}
+
+/* Specifically for Dark Theme visibility */
+[data-theme='dark'] .stat-box strong,
+[data-theme='dark'] .stat-box.sgpa {
+  color: #ffffff !important; /* Forces white text only in dark mode */
+}
+
+  #noticeBox marquee {
+    display: block;
+    width: 100%;
+    white-space: nowrap;
+  }
+  /* Academic Grid Layout */
+.academic-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.trend-col {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sem-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--ks-blue);
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.stat-box {
+  padding: 5px 2px;
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.stat-box.sgpa {
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.stat-box.cgpa {
+  background: rgba(243, 112, 33, 0.06);
+  color: var(--ks-orange);
+  border: 1px dashed rgba(243, 112, 33, 0.3);
+}
+
+.stat-box strong {
+  font-size: 12px;
+  display: block;
+}
+
+.stat-box small {
+  font-size: 7px;
+  font-weight: 700;
+  display: block;
+  opacity: 0.7;
+}
+  </style>
+</head>
+<body>
+
+<div id="splashScreen">
+  <img src="https://i.ibb.co/GfVcVgg2/KSRCTLogo.png" class="splash-logo">
+  <p style="color: white; margin-top: 20px; font-weight: 600; letter-spacing: 2px; font-size: 12px;">ECE PORTAL LOADING...</p>
+</div>
+
+<div id="mainHeader">
+  <div class="top-bar"><span>TNEA CODE: 2607</span><div><span>ECE DEPARTMENT</span></div></div>
+  <div class="portal-header">
+    <div class="header-brand">
+      <img src="https://i.ibb.co/GfVcVgg2/KSRCTLogo.png">
+      <div class="brand-text"><h2>K.S. RANGASAMY</h2><p>College of Technology</p></div>
+    </div>
+    <div class="header-right" style="text-align: right;">
+      <div style="font-size: 9px; font-weight: 800; color: #6B7280;">AUTONOMOUS INSTITUTION</div>
+      <div style="font-size: 11px; font-weight: 700; color: var(--ks-blue);">Affiliated to Anna University</div>
+    </div>
+  </div>
+</div>
+
+<div id="loginView">
+  <div class="login-card">
+    <img src="https://i.ibb.co/GfVcVgg2/KSRCTLogo.png" 
+     style="width:70px; margin-bottom:15px; cursor: pointer;" 
+     onclick="adminClickTrigger()">
+    <h1 style="font-size:16px; font-weight:800; color:var(--ks-blue); text-transform:uppercase;">K.S. Rangasamy College of Technology</h1>
+    <div style="color:var(--ks-orange); font-size:10px; font-weight:700; letter-spacing:1.5px; margin-bottom:20px;">STUDENT PORTAL ECE</div>
+    
+    <div style="text-align:left;">
+      <span class="input-label" style="font-size:10px; font-weight:700; color:#6B7280;">REGISTRATION NUMBER</span>
+      <input type="text" id="regNo" class="input-field" placeholder="Enter Reg No" maxlength="16" oninput="handleRegInput()">
+    </div>
+
+    <div style="text-align:left; margin-top:20px;">
+      <span class="input-label" style="font-size:10px; font-weight:700; color:#6B7280;">
+        DATE OF BIRTH <span title="Format: YYYY-MM-DD" style="cursor:help; color:var(--ks-orange)">ⓘ</span>
+      </span>
+      <div style="position:relative">
+        <input type="password" id="dob" class="input-field" placeholder="YYYY-MM-DD" oninput="validateLogin()">
+        <button onclick="togglePass()" style="position:absolute; right:12px; top:10px; background:none; border:none; color:#9CA3AF;">
+          <i data-lucide="eye" id="eyeIcon" size="18"></i>
+        </button>
+      </div>
+    </div>
+
+    <div style="text-align: left; margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+      <input type="checkbox" id="rememberMe" style="cursor:pointer;">
+      <label for="rememberMe" style="font-size: 11px; font-weight: 600; color: #6B72803; cursor:pointer;">Remember Registration Number</label>
+    </div>
+    <button id="loginBtn" class="btn-login" onclick="login()" disabled>Sign In</button>
+    
+  </div>
+</div>
+
+<div id="portalView" class="hidden">
+  <div class="nav">
+    <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="openProfile()">
+      <div style="background:var(--ks-blue); color:white; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; border: 2px solid var(--ks-orange);" id="initial">S</div>
+      <div><div id="uGreeting" style="font-weight:700; font-size:14px;">Welcome</div><div id="uReg" style="font-size:11px; opacity:0.7;">Reg No</div></div>
+    </div>
+
+    <div id="statusContainer" style="display: flex; align-items: center; gap: 5px; padding: 5px;">
+      <div id="statusDot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #94a3b8;"></div>
+      <span id="statusText" style="font-size: 10px; font-weight: bold; color: #94a3b8;">CONNECTING...</span>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <button onclick="toggleTheme()" class="btn-modal-sec" style="padding:8px;"><i data-lucide="moon" id="themeIcon" size="18"></i></button>
+      <button onclick="showLogoutModal()" class="btn-modal-sec" style="padding:8px; color:#EF4444;"><i data-lucide="log-out" size="18"></i></button>
+    </div>
+  </div>
+ 
+  <div class="summary-container">
+  <h3 style="font-size: 11px; color: var(--ks-blue); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; letter-spacing: 1px; font-weight: 800;">
+    <i data-lucide="bar-chart-3" size="14"></i> ACADEMIC PERFORMANCE TREND
+  </h3>
+  
+  <div id="noticeBox"></div>
+
+  <div class="academic-grid">
+    <div class="trend-col">
+      <span class="sem-label">Sem 1</span>
+      <div class="stat-box sgpa"><small>SGPA</small><strong id="sumS1">0.00</strong></div>
+      <div class="stat-box cgpa"><small>CGPA</small><strong id="calcCG1">0.00</strong></div>
+    </div>
+    
+    <div class="trend-col">
+      <span class="sem-label">Sem 2</span>
+      <div class="stat-box sgpa"><small>SGPA</small><strong id="sumS2">0.00</strong></div>
+      <div class="stat-box cgpa"><small>CGPA</small><strong id="calcCG2">0.00</strong></div>
+    </div>
+
+    <div class="trend-col">
+      <span class="sem-label">Sem 3</span>
+      <div class="stat-box sgpa"><small>SGPA</small><strong id="sumS3">0.00</strong></div>
+      <div class="stat-box cgpa"><small>CGPA</small><strong id="calcCG3">0.00</strong></div>
+    </div>
+
+    <div class="trend-col">
+      <span class="sem-label">Sem 4</span>
+      <div class="stat-box sgpa"><small>SGPA</small><strong id="sumS4">0.00</strong></div>
+      <div class="stat-box cgpa"><small>CGPA</small><strong id="calcCG4">0.00</strong></div>
+    </div>
+
+    <div class="trend-col">
+      <span class="sem-label">Sem 5</span>
+      <div class="stat-box sgpa"><small>SGPA</small><strong id="sumS5">0.00</strong></div>
+      <div class="stat-box cgpa"><small>CGPA</small><strong id="calcCG5">0.00</strong></div>
+    </div>
+  </div>
+
+  <div class="cgpa-highlight-card">
+    <div style="flex: 1;">
+      <span style="font-size: 10px; opacity: 0.9; font-weight: 600; text-transform: uppercase;">Final Cumulative GPA</span>
+      <div id="sumCGPA" style="font-size: 32px; font-weight: 900; line-height: 1;">0.00</div>
+    </div>
+    <div class="performance-tag" id="perfTag">---</div>
+  </div>
+</div>
+
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:20px;">
+      <select id="semSelect" onchange="loadData()" class="input-field" style="font-weight:700;"><option value="1">Semester I</option><option value="2">Semester II</option><option value="3">Semester III</option><option value="4">Semester IV</option><option value="5">Semester V</option></select>
+      <select id="modeSelect" onchange="loadData()" class="input-field" style="font-weight:700;"><option value="First Attempt">First Attempt</option><option value="Current Status">Current Status</option></select>
+    </div>
+    <div id="subjects"></div>
+    <div style="background:var(--ks-blue); color:white; padding:20px; border-radius:15px; display:grid; grid-template-columns:1fr 1fr; margin-top:20px; text-align:center;">
+      <div><div style="font-size:11px; opacity:0.8;">SEM GPA</div><div id="sgpa" style="font-size:28px; font-weight:800;">0.00</div></div>
+      <div style="border-left:1px solid rgba(255,255,255,0.2);"><div style="font-size:11px; opacity:0.8;">OVERALL CGPA</div><div id="cgpa" style="font-size:28px; font-weight:800;">0.00</div></div>
+    </div>
+    <div class="footer-action-container">
+  <div class="button-container">
+    <button class="feedback-btn" id="fbBtn" onclick="openFeedback()">
+      <i data-lucide="message-square" size="18"></i> Feedback
+    </button>
+
+    <button class="save-btn" id="saveBtn" onclick="saveGrades()">
+      <i data-lucide="save" size="18"></i> Save Changes
+    </button>
+  </div>
+</div>
+  </div>
+
+  
+
+  <div id="feedbackModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div style="color:var(--ks-blue); margin-bottom:15px;"><i data-lucide="message-square" size="40"></i></div>
+      <h3>Portal Feedback</h3>
+      <p style="font-size: 12px; margin-bottom: 10px;">Help us improve your experience.</p>
+      <textarea id="feedbackText" class="input-field" rows="4" placeholder="Write your feedback here..." style="resize: none;"></textarea>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn-modal-sec" onclick="closeModal('feedbackModal')">Cancel</button>
+        <button class="btn-modal-pri" id="sendFeedbackBtn" onclick="sendFeedback()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="freezeModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div style="color: #EF4444; margin-bottom: 15px;">
+      <i data-lucide="lock" size="40"></i>
+    </div>
+    <h3 style="color: var(--ks-blue);">Portal Locked</h3>
+    <p style="font-size: 13px; color: #64748b; line-height: 1.5;">
+      Editing is currently frozen by the Administrator.<br>
+      Please contact the Representative for changes.
+    </p>
+    <div style="margin-top: 20px;">
+      <button class="btn-modal-pri" onclick="closeModal('freezeModal')">Understood</button>
+    </div>
+  </div>
+</div>
+
+  <div id="pwaPrompt" class="hidden" style="background:var(--ks-blue); color:white; padding:15px; margin:20px; border-radius:12px; border:1px solid var(--ks-orange); display:flex; align-items:center; justify-content:space-between;">
+    <div style="font-size:12px;"><strong>Add to Home Screen?</strong><br>Access results like a mobile app.</div>
+    <button onclick="this.parentElement.classList.add('hidden')" style="background:var(--ks-orange); border:none; color:white; padding:5px 10px; border-radius:5px; cursor:pointer;">OK</button>
+  </div>
+  
+</div>
+<div id="adminAuthModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div style="color:var(--ks-blue); margin-bottom:15px;"><i data-lucide="shield-check" size="40"></i></div>
+    <h3>Admin Login</h3>
+    <input type="password" id="adminPass" class="input-field" placeholder="Enter Admin Password">
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-modal-sec" onclick="closeModal('adminAuthModal')">Cancel</button>
+      <button class="btn-modal-pri" onclick="verifyAdmin()">Verify</button>
+    </div>
+  </div>
+</div>
+
+<div id="adminView" class="hidden" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg);">
+  <div class="nav" style="display: flex; justify-content: space-between; align-items: center;">
+  <div style="font-weight:800; color:var(--ks-blue); letter-spacing: 1px;">ADMIN DASHBOARD</div>
+  
+  <button onclick="confirmLogout()" class="btn-modal-danger" 
+        style="width: 100px !important; 
+               height: 35px !important; 
+               flex: none !important; 
+               align-self: center !important; 
+               margin-left: auto; 
+               padding: 0 10px; 
+               border-radius: 6px; 
+               font-size: 13px; 
+               display: flex; 
+               align-items: center; 
+               justify-content: center; 
+               gap: 5px;">
+  <i data-lucide="log-out" size="14"></i> Exit
+</button>
+</div>
+  <div class="container">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:20px;">
+      <div class="subject-card" style="flex-direction:column; text-align:center;">
+        <span style="font-size:10px; opacity:0.6;">TOTAL STUDENTS</span>
+        <div id="adminStatCount" style="font-size:20px; font-weight:800;">0</div>
+      </div>
+      <div class="subject-card" style="flex-direction:column; text-align:center;">
+        <span style="font-size:10px; opacity:0.6;">NEW FEEDBACKS</span>
+        <div id="adminStatFb" style="font-size:20px; font-weight:800;">0</div>
+      </div>
+    </div>
+    <div class="subject-card" style="display:block; background: #fff3e0; border: 1px solid var(--ks-orange);">
+  <h3 style="font-size:14px; margin-top:0; color:var(--ks-blue);">System Controls</h3>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <span>Maintenance Mode (Block Login)</span>
+    <input type="checkbox" id="maintToggle" onchange="updateSettings('maintenance', this.checked)">
+  </div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Freeze Editing (Read-Only)</span>
+    <input type="checkbox" id="freezeToggle" onchange="updateSettings('freeze', this.checked)">
+  </div>
+</div>
+
+<div class="subject-card" style="display:block; margin-top:15px;">
+  <h3 style="font-size:14px; margin-top:0;">Direct Grade Management</h3>
+  <div style="display:flex; gap:10px;">
+    <input type="text" id="adminSearchReg" class="input-field" placeholder="Student Reg No">
+    <button onclick="adminLoadStudent()" class="btn-modal-pri" style="width:100px;">Load</button>
+  </div>
+</div>
+    <div class="subject-card" style="display:block;">
+      <h3 style="font-size:14px; margin-top:0;">Update Portal Marquee</h3>
+      <input type="text" id="adminNoticeInput" class="input-field" placeholder="Type new notice here...">
+      <button onclick="adminUpdateNotice()" id="adminNoticeBtn" class="btn-login" style="margin-top:10px; padding:10px;">Apply to Marquee</button>
+    </div>
+    <h3 style="font-size:14px; margin-top:20px;">Student Feedback Log</h3>
+    <div id="adminFbList"></div>
+  </div>
+  <div class="admin-card" style="margin-top: 20px; border-top: 4px solid var(--ks-blue);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3 style="margin: 0; color: var(--ks-blue); display: flex; align-items: center; gap: 10px;">
+      <i data-lucide="shield-check" size="20"></i> Recent Login Activity
+    </h3>
+    <button onclick="fetchLogs()" class="btn-modal-sec" 
+            style="width: 100px !important; height: 30px !important; font-size: 12px; margin: 0 !important; flex: none !important;">
+      Refresh
+    </button>
+  </div>
+  
+  <div id="logContainer" style="max-height: 300px; overflow-y: auto; background: #fdfdfd; border: 1px solid #eee; border-radius: 8px;">
+    <p style="text-align:center; padding: 20px; color: #999; font-style: italic;">Click Refresh to view recent activity...</p>
+  </div>
+</div>
+</div>
+
+<div class="portal-footer">
+  <div class="footer-links"><a href="https://ksrct.ac.in/" target="_blank">Official Website</a> | <a href="https://academic.ksrctdigipro.in/LogIn">Academic Alys</a></div>
+  <p>© 2026 K.S. Rangasamy College of Technology</p>
+  <p style="opacity: 0.5; font-size: 10px; margin-top: 3px;">Deptartment of ECE (Site Dev. By Deva S)</p>
+</div>
+
+<div id="logoutModal" class="modal-overlay hidden"><div class="modal"><div style="color:#EF4444; margin-bottom:15px;"><i data-lucide="log-out" size="40"></i></div><h3>Logout Session</h3><p>Are you sure you want to exit?</p><div style="display:flex; gap:10px; margin-top:20px;"><button class="btn-modal-sec" onclick="closeModal('logoutModal')">Cancel</button><button class="btn-modal-danger" onclick="confirmLogout()">Logout</button></div></div></div>
+<div id="errorModal" class="modal-overlay hidden"><div class="modal"><div style="color:#EF4444; margin-bottom:15px;"><i data-lucide="shield-alert" size="40"></i></div><h3>Login Failed</h3><p id="errorMsg"></p><button class="btn-modal-pri" style="width:100%" onclick="closeModal('errorModal')">Try Again</button></div></div>
+<div id="successModal" class="modal-overlay hidden"><div class="modal"><div style="color:#10B981; margin-bottom:15px;"><i data-lucide="check-circle" size="40"></i></div><h3>Records Updated</h3><p>Saved successfully.</p><button class="btn-modal-pri" style="width:100%" onclick="closeModal('successModal')">Close</button></div></div>
+<div id="profileModal" class="modal-overlay hidden"><div class="modal" style="text-align:left;"><h3 id="profName" style="color:var(--ks-blue);"></h3><p id="profReg" style="font-size:12px;"></p><div style="margin-top:15px;"><span style="font-size:10px; font-weight:700;">PHONE</span><input type="text" id="profPhone" class="input-field" maxlength="10" oninput="validateProfile()"></div><div style="margin-top:10px;"><span style="font-size:10px; font-weight:700;">EMAIL</span><input type="email" id="profEmail" class="input-field" oninput="validateProfile()"></div><div style="display:flex; gap:10px; margin-top:20px;"><button class="btn-modal-sec" onclick="closeModal('profileModal')">Cancel</button><button class="btn-modal-pri" id="profUpdateBtn" onclick="updateProfile()" disabled>Update</button></div></div>
+</div>
+
+<script>
+  let session = {}; const GRADES = ["", "O", "A+", "A", "B+", "B", "C", "F", "AB"];
+  
+  // 1. New function for Auto-Tab
+    function handleRegInput() {
+      const regField = document.getElementById('regNo');
+      if (regField.value.length >= 16) { // Tabs to DOB after 16 digits
+        document.getElementById('dob').focus();
+      }
+      validateLogin();
+    }
+
+    // COMBINED WINDOW LOAD LOGIC
+  window.onload = () => {
+    // A. Handle Splash Screen
+    setTimeout(() => {
+      const splash = document.getElementById('splashScreen');
+      if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => splash.classList.add('hidden'), 500);
+      }
+    }, 2000);
+
+    // B. Initialize Icons and Validation
+    lucide.createIcons();
+    validateLogin();
+
+    // C. Handle "Remember Me" Data
+    const savedReg = localStorage.getItem('ksrct_reg');
+    if (savedReg) {
+      document.getElementById('regNo').value = savedReg;
+      document.getElementById('rememberMe').checked = true;
+      validateLogin(); // Enable the button if data exists
+    }
+  };
+
+  function toggleTheme() { 
+    const b = document.body; const icon = document.getElementById('themeIcon');
+    const isDark = b.getAttribute('data-theme') === 'dark';
+    if(isDark) { b.removeAttribute('data-theme'); icon.setAttribute('data-lucide', 'moon'); } 
+    else { b.setAttribute('data-theme', 'dark'); icon.setAttribute('data-lucide', 'sun'); }
+    lucide.createIcons(); 
+  }
+
+  function togglePass() { const p = document.getElementById('dob'); p.type = p.type === 'password' ? 'text' : 'password'; lucide.createIcons(); }
+  function validateLogin() { const r = document.getElementById('regNo').value, d = document.getElementById('dob').value; document.getElementById('loginBtn').disabled = !(r.length >= 10 && d.length > 5); }
+  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  function showLogoutModal() { document.getElementById('logoutModal').classList.remove('hidden'); lucide.createIcons(); }
+  
+  function confirmLogout() { 
+  closeModal('logoutModal'); 
+  
+  // HIDE EVERYTHING
+  document.getElementById('portalView').classList.add('hidden'); 
+  document.getElementById('adminView').classList.add('hidden'); // This prevents the overlap!
+  document.getElementById('mainHeader').classList.add('hidden'); 
+  
+  // RESET LOGIN SCREEN
+  document.getElementById('mainHeader').classList.remove('hidden'); 
+  document.getElementById('loginView').classList.remove('hidden'); 
+  
+  // Clear inputs
+  document.getElementById('regNo').value = ""; 
+  document.getElementById('dob').value = ""; 
+  if(document.getElementById('adminPass')) document.getElementById('adminPass').value = "";
+  
+  const btn = document.getElementById('loginBtn'); 
+  btn.innerHTML = 'Sign In'; 
+  btn.disabled = true; 
+  
+  session = {}; 
+  lucide.createIcons(); 
+}
+
+function updateSummary(data) {
+  let runningTotal = 0;
+  let activeSems = 0;
+
+  for (let i = 1; i <= 5; i++) {
+    const sgpaVal = parseFloat(data[`sgpa${i}`]) || 0;
+    const sgpaEl = document.getElementById(`sumS${i}`);
+    const cgpaEl = document.getElementById(`calcCG${i}`);
+
+    // Update SGPA Box
+    if (sgpaEl) {
+      sgpaEl.innerText = sgpaVal > 0 ? sgpaVal.toFixed(2) : "0.00";
+      sgpaEl.parentElement.style.opacity = sgpaVal === 0 ? "0.3" : "1";
+    }
+
+    // Accumulate for CGPA Calculation
+    if (sgpaVal > 0) {
+      runningTotal += sgpaVal;
+      activeSems++;
+    }
+
+    // Update the "CGPA Up To This Semester" Box
+    if (cgpaEl) {
+      const currentCG = activeSems > 0 ? (runningTotal / activeSems) : 0;
+      cgpaEl.innerText = currentCG > 0 ? currentCG.toFixed(2) : "0.00";
+      cgpaEl.parentElement.style.opacity = currentCG === 0 ? "0.3" : "1";
+    }
+  }
+
+  // Update the Final Total
+  const finalCGPA = activeSems > 0 ? (runningTotal / activeSems) : 0;
+  document.getElementById('sumCGPA').innerText = finalCGPA.toFixed(2);
+
+  // Performance Color Logic
+  const tag = document.getElementById('perfTag');
+  if (finalCGPA >= 9.0) { tag.innerText = "OUTSTANDING"; tag.style.color = "#4ade80"; }
+  else if (finalCGPA >= 8.0) { tag.innerText = "EXCELLENT"; tag.style.color = "#60a5fa"; }
+  else if (finalCGPA >= 7.0) { tag.innerText = "GOOD"; tag.style.color = "#fbbf24"; }
+  else { tag.innerText = "AVERAGE"; tag.style.color = "#f87171"; }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+  function login() { 
+    const btn = document.getElementById('loginBtn'); 
+    btn.innerHTML = '<i data-lucide="loader-2" class="spinner" size="20"></i> Verifying...'; 
+    btn.disabled = true; lucide.createIcons();
+
+    if (document.getElementById('rememberMe').checked) {
+      localStorage.setItem('ksrct_reg', document.getElementById('regNo').value);
+    } else {
+      localStorage.removeItem('ksrct_reg');
+    }
+
+    const deviceInfo = navigator.userAgent;
+
+    google.script.run.withSuccessHandler(res => { 
+      if(res.status === "success") { 
+
+        // SAVE DATA LOCALLY
+        localStorage.setItem('user_session_reg', reg);
+        localStorage.setItem('user_session_dob', dob);
+
+        // Store session data so other functions know who is logged in
+        session.reg = res.reg;
+        
+        document.getElementById('loginView').classList.add('hidden'); 
+        document.getElementById('mainHeader').classList.add('hidden'); 
+        document.getElementById('portalView').classList.remove('hidden'); 
+        
+        // UPDATED LINE: Call the greeting function instead of just setting name
+        updateGreeting(res.name, res.isBirthday); 
+        
+        // SIMPLIFIED LINE: Just pass the response object directly
+        updateSummary(res);
+
+        document.getElementById('uReg').innerText = "Reg No: " + res.reg; 
+        document.getElementById('initial').innerText = res.name.charAt(0); 
+        loadData(); 
+      }
+      else { 
+        // ADD THIS FOR THE SHAKE
+        const card = document.querySelector('.login-card');
+        card.classList.add('apply-shake');
+        setTimeout(() => card.classList.remove('apply-shake'), 400);
+        // FIX: Use the message coming from Code.gs (e.g., "Portal under maintenance")
+        document.getElementById('errorMsg').innerText = res.message; 
+        document.getElementById('errorModal').classList.remove('hidden');
+
+        // Reset the button
+        const btn = document.getElementById('loginBtn');
+        btn.innerHTML = 'Sign In'; 
+        btn.disabled = false; 
+        lucide.createIcons();
+      } 
+    }).processLogin(document.getElementById('regNo').value, document.getElementById('dob').value, deviceInfo); 
+  }
+
+  function checkConnection() {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+
+  google.script.run
+    .withSuccessHandler(() => {
+      dot.className = 'status-live';
+      text.innerText = 'SYSTEM LIVE';
+      text.style.color = '#22c55e';
+    })
+    .withFailureHandler(() => {
+      dot.className = 'status-offline';
+      text.innerText = 'CONNECTION LOST';
+      text.style.color = '#ef4444';
+    })
+    .ping(); // This calls a function we create in Code.gs
+}
+
+// Run this check when the page loads
+window.addEventListener('load', checkConnection);
+
+
+  function updateGreeting(name, isBirthday) {
+  const now = new Date();
+  const hour = now.getHours();
+  let greetingMsg = "";
+
+  if (isBirthday) {
+    greetingMsg = `Happy Birthday, ${name}! <span class="bday-icon">🎂</span>`;
+    document.getElementById('uGreeting').style.color = '#F37021';
+    
+    // Triple Burst Confetti
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#002D62', '#F37021']
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#002D62', '#F37021']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    }());
+  } else {
+    if (hour < 12) greetingMsg = `Good Morning, ${name} ☀️`;
+    else if (hour < 17) greetingMsg = `Good Afternoon, ${name} 🌤️`;
+    else greetingMsg = `Good Evening, ${name} 🌙`;
+    document.getElementById('uGreeting').style.color = 'var(--text)';
+  }
+  
+  document.getElementById('uGreeting').innerHTML = greetingMsg;
+  }
+  
+  function loadData() { 
+    const s = document.getElementById('semSelect').value, m = document.getElementById('modeSelect').value; 
+    document.getElementById('subjects').innerHTML = '<div style="text-align:center; padding:60px;"><i data-lucide="loader-2" class="spinner" size="32"></i></div>'; 
+    lucide.createIcons(); 
+    google.script.run.withSuccessHandler(res => { 
+      document.getElementById('noticeBox').innerHTML = res.notice ? `<div style="background:var(--ks-orange); color:white; padding:12px; border-radius:12px; font-size:13px; font-weight:600; margin-bottom:20px; overflow:hidden;"><marquee scrollamount="5">${res.notice}</marquee></div>` : ""; 
+      let html = ""; 
+      res.subjects.forEach((n, i) => { 
+        const g = res.grades[i] || "", cls = ['F','AB'].includes(g)?'fail':(g?'pass':''); 
+        html += `<div class="subject-card"><span>${n}</span><select class="grade-box ${cls}" onchange="this.className='grade-box '+(['F','AB'].includes(this.value)?'fail':'pass')">${GRADES.map(x=>`<option value="${x}" ${g==x?'selected':''}>${x||'-'}</option>`).join('')}</select></div>`; 
+      }); 
+      document.getElementById('subjects').innerHTML = html; 
+      document.getElementById('sgpa').innerText = parseFloat(res.sgpa).toFixed(2); 
+      document.getElementById('cgpa').innerText = parseFloat(res.cgpa).toFixed(2); 
+    }).getLiveGrades(s, m, session.reg); 
+  }
+
+  function saveGrades() {
+  const b = document.getElementById('saveBtn');
+  const originalHTML = '<i data-lucide="save" size="18"></i> Save Changes';
+  
+  // 1. Show loading state
+  b.innerHTML = '<i data-lucide="loader-2" class="spinner" size="18"></i> Saving...';
+  b.disabled = true;
+  lucide.createIcons();
+
+  // 2. Security Check: Is editing frozen?
+  google.script.run.withSuccessHandler(settings => {
+    if (settings.freeze) {
+      document.getElementById('freezeModal').classList.remove('hidden');
+      b.innerHTML = originalHTML;
+      b.disabled = false;
+      lucide.createIcons();
+      return;
+    }
+    
+    // 3. Collect grades from UI
+    const grades = Array.from(document.querySelectorAll('.grade-box')).map(s => s.value);
+    const sem = document.getElementById('semSelect').value;
+    const mode = document.getElementById('modeSelect').value;
+
+    // 4. Submit to Server (Using the updated Code.gs logic)
+    google.script.run.withSuccessHandler(res => {
+      // Reset button
+      b.innerHTML = originalHTML;
+      b.disabled = false;
+      lucide.createIcons();
+      
+      if (res.status === "success") {
+        // Show Success Modal
+        document.getElementById('successModal').classList.remove('hidden');
+        
+        // REFRESH THE SUMMARY BOXES IMMEDIATELY with the data sent back from server
+        if(res.updatedData) {
+          updateSummary(res.updatedData);
+        }
+        
+        // Celebrate!
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        
+        // Also refresh the specific semester subject list
+        loadData(); 
+      } else {
+        alert("Error: " + res.message);
+      }
+    }).submitGrades(sem, mode, grades, session.reg);
+
+  }).getAdminPortalStatus();
+}
+
+  function openProfile() { 
+    document.getElementById('profileModal').classList.remove('hidden'); 
+    google.script.run.withSuccessHandler(res => { 
+      document.getElementById('profPhone').value = res.phone; 
+      document.getElementById('profEmail').value = res.email; validateProfile(); 
+    }).getProfileData(session.reg); 
+  }
+
+  function validateProfile() { 
+    const p = document.getElementById('profPhone').value, e = document.getElementById('profEmail').value; 
+    document.getElementById('profUpdateBtn').disabled = !(/^\d{10}$/.test(p) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)); 
+  }
+
+  function updateProfile() { 
+    const b = document.getElementById('profUpdateBtn'); b.innerHTML = "Updating..."; b.disabled = true; 
+    google.script.run.withSuccessHandler(() => { b.innerHTML = "Update"; closeModal('profileModal'); document.getElementById('successModal').classList.remove('hidden'); lucide.createIcons(); }).updateProfileData(session.reg, document.getElementById('profPhone').value, document.getElementById('profEmail').value); 
+  }
+
+  /** FEEDBACK LOGIC **/
+  function openFeedback() {
+    document.getElementById('feedbackModal').classList.remove('hidden');
+    document.getElementById('feedbackText').value = ""; // Clear previous text
+    lucide.createIcons();
+  }
+
+  function sendFeedback() {
+    const text = document.getElementById('feedbackText').value.trim();
+    const btn = document.getElementById('sendFeedbackBtn');
+    
+    if (!text) { 
+      alert("Please enter your feedback before submitting."); 
+      return; 
+    }
+    
+    btn.innerHTML = '<i data-lucide="loader-2" class="spinner" size="18"></i> Sending...';
+    btn.disabled = true;
+    lucide.createIcons();
+
+    google.script.run.withSuccessHandler(res => {
+      btn.innerHTML = "Submit";
+      btn.disabled = false;
+      if(res.status === "success") {
+        closeModal('feedbackModal'); // Close the input box
+        
+        // REUSING YOUR EXISTING SUCCESS MODAL
+        const successMdl = document.getElementById('successModal');
+        successMdl.querySelector('p').innerText = "Feedback sent successfully!";
+        successMdl.classList.remove('hidden');
+        
+        lucide.createIcons();
+      } else {
+        alert("Error: " + res.message);
+      }
+    }).submitFeedback(session.reg, text);
+  }
+
+  // Disable Right-Click
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+}, false);
+
+// Optional: Disable common keyboard shortcuts for "Inspect Element"
+document.addEventListener('keydown', function(e) {
+  // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+  if (
+    e.keyCode === 123 || 
+    (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
+    (e.ctrlKey && e.keyCode === 85)
+  ) {
+    e.preventDefault();
+  }
+}, false);
+// Disable text selection via JavaScript
+document.onselectstart = function() {
+  return false;
+};
+
+// Disable dragging of images (like the KSRCT Logo)
+document.ondragstart = function() {
+  return false;
+};
+
+function showPwaPrompt() {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const prompt = document.getElementById('pwaPrompt');
+
+  if (isMobile && !isStandalone && prompt) {
+    prompt.classList.remove('hidden');
+  }
+}
+
+
+let idleTimer;
+
+function resetIdleTimer() {
+  if (typeof idleTimer !== 'undefined') clearTimeout(idleTimer);
+  
+  // 10 Minutes = 600,000 ms
+  idleTimer = setTimeout(() => {
+    // Only logout if the student is actually logged in (portalView is visible)
+    const portal = document.getElementById('portalView');
+    if (portal && !portal.classList.contains('hidden')) {
+      alert("Session expired due to 10 minutes of inactivity.");
+      confirmLogout(); 
+    }
+  }, 600000); 
+}
+
+// Attach listeners safely
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('keypress', resetIdleTimer);
+document.addEventListener('touchstart', resetIdleTimer);
+
+let adminClicks = 0;
+let adminClickTimer;
+
+function adminClickTrigger() {
+  adminClicks++;
+  clearTimeout(adminClickTimer);
+  
+  // Requirement: 3 clicks within 1 second
+  if (adminClicks === 3) {
+    adminClicks = 0;
+    document.getElementById('adminAuthModal').classList.remove('hidden');
+    lucide.createIcons();
+  } else {
+    adminClickTimer = setTimeout(() => { adminClicks = 0; }, 1000);
+  }
+}
+
+function verifyAdmin() {
+  const pass = document.getElementById('adminPass').value;
+  // Current logic for Admin entrance
+  if (pass === "KSRECE2026") { 
+    closeModal('adminAuthModal');
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('mainHeader').classList.add('hidden');
+    document.getElementById('adminView').classList.remove('hidden');
+    loadAdminDashboard();
+  } else {
+    alert("Incorrect Admin Password.");
+    document.getElementById('adminPass').value = "";
+  }
+}
+
+function loadAdminDashboard() {
+  // Fetches data from the getAdminData function in your Code.gs
+  google.script.run.withSuccessHandler(res => {
+    // 1. Sync the Checkboxes
+    // We check if the value from the sheet is exactly "ON"
+    document.getElementById('maintToggle').checked = (res.maintenance === "ON");
+    document.getElementById('freezeToggle').checked = (res.freeze === "ON");
+
+    // 2. Update the Stats
+    document.getElementById('adminStatCount').innerText = res.studentCount;
+    document.getElementById('adminStatFb').innerText = res.feedbacks.length;
+    document.getElementById('adminNoticeInput').value = res.notice;
+
+    
+    let html = "";
+    res.feedbacks.forEach(fb => {
+      html += `
+        <div class="subject-card" style="display:block; font-size:12px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; color:var(--ks-orange); font-weight:700;">
+            <span>${fb[2]}</span><span>${fb[1]}</span>
+          </div>
+          <div style="margin-top:5px; color:var(--text);">${fb[3]}</div>
+          <div style="font-size:9px; opacity:0.5; margin-top:5px;">Submitted: ${fb[0]}</div>
+        </div>`;
+    });
+    document.getElementById('adminFbList').innerHTML = html || "No feedback found.";
+  }).getAdminData();
+}
+
+function adminLoadStudent() {
+  const reg = document.getElementById('adminSearchReg').value;
+  if (!reg) {
+    alert("Please enter a Registration Number.");
+    return;
+  }
+
+  // Show the modal and a loading spinner
+  document.getElementById('adminGradeModal').classList.remove('hidden');
+  document.getElementById('adminStudentGradeContent').innerHTML = '<div style="text-align:center; padding:20px;"><i data-lucide="loader-2" class="spinner" size="40"></i><p>Fetching Student Records...</p></div>';
+  lucide.createIcons();
+
+  // Reuse your existing processLogin logic to get the student's name/data
+  google.script.run.withSuccessHandler(res => {
+    if (res.status === "success") {
+      document.getElementById('adminViewStudentName').innerText = "Grades for: " + res.name;
+      
+      // Now fetch the actual grades for this student
+      fetchGradesForAdmin(reg, "5");
+    } else {
+      document.getElementById('adminStudentGradeContent').innerHTML = `<p style="color:red; text-align:center;">${res.message}</p>`;
+    }
+  }).processLogin(reg, "ADMIN_BYPASS"); // Use a bypass keyword or empty string
+}
+
+function fetchGradesForAdmin(reg, sem = "5") {
+  // 1. Show a loading spinner immediately so you know the click worked
+  document.getElementById('adminStudentGradeContent').innerHTML = 
+    '<div style="text-align:center; padding:20px;"><i data-lucide="loader-2" class="spinner" size="40"></i><p>Fetching Semester ' + sem + '...</p></div>';
+  lucide.createIcons();
+
+  // 2. Call the backend with success AND failure handlers
+  google.script.run
+    .withSuccessHandler(data => {
+      // Check if data actually exists and has subjects
+      if (!data || data.status === "error" || !data.subjects) {
+        document.getElementById('adminStudentGradeContent').innerHTML = 
+          `<p style="color:red; text-align:center; padding:20px;">Error: ${data.message || 'No records found for this semester.'}</p>`;
+        return;
+      }
+
+      // 3. Build the UI only if data is valid
+      let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f0f7ff; padding:10px; border-radius:8px;">
+          <span style="font-weight:bold; color:var(--ks-blue);">Select Semester:</span>
+          <select id="adminSemSelect" onchange="fetchGradesForAdmin('${reg}', this.value)" 
+                  style="padding:5px; border-radius:4px; border:1px solid var(--ks-blue);">
+            ${[1,2,3,4,5].map(s => `<option value="${s}" ${sem == s ? 'selected' : ''}>Semester ${s}</option>`).join('')}
+          </select>
+        </div>
+        
+        <table style="width:100%; border-collapse: collapse; font-size:13px;">
+          <tr style="background:#f8f9fa; border-bottom:2px solid #dee2e6;">
+            <th style="padding:10px; text-align:left;">Subject</th>
+            <th style="padding:10px; width:80px; text-align:center;">Grade</th>
+          </tr>`;
+      
+      data.subjects.forEach((sub, index) => {
+        const gradeValue = data.grades[index] || "";
+        html += `
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding:10px;">${sub}</td>
+            <td style="padding:10px; text-align:center;">
+              <input type="text" value="${gradeValue}" id="adminGrade_${index}" 
+                     class="grade-input-admin" 
+                     style="width:55px; text-align:center; border:1px solid #ccc; border-radius:4px; padding:4px; font-weight:bold;">
+            </td>
+          </tr>`;
+      });
+      
+      html += `</table>
+        <div style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn-modal-pri" style="flex:1" onclick="adminSubmitGradeUpdate('${reg}', '${sem}')">Save Semester ${sem} Changes</button>
+          <button class="btn-modal-sec" style="flex:1" onclick="closeModal('adminGradeModal')">Cancel</button>
+        </div>`;
+      
+      document.getElementById('adminStudentGradeContent').innerHTML = html;
+    })
+    .withFailureHandler(err => {
+      // This catches total script crashes (like syntax errors)
+      document.getElementById('adminStudentGradeContent').innerHTML = 
+        `<p style="color:red; text-align:center; padding:20px;">Critical Error: ${err.message}</p>`;
+    })
+    .getStudentGrades(reg, sem);
+}
+
+function updateSettings(type, val) {
+  // val is true/false from the checkbox
+  google.script.run.withSuccessHandler(res => {
+    // Optional: Add a small toast or notification that setting was saved
+    console.log(type + " updated to: " + val);
+  }).toggleSetting(type, val); 
+}
+
+function adminSubmitGradeUpdate(regNo) {
+  const inputs = document.querySelectorAll('.grade-input-admin');
+  const grades = Array.from(inputs).map(input => input.value);
+  
+  const btn = event.target;
+  btn.innerText = "Saving Sem " + sem + "...";
+  btn.disabled = true;
+
+  // Uses your existing submitGrades but targets the specific sem
+  google.script.run.withSuccessHandler(() => {
+    alert("Grades for Semester " + sem + " updated successfully!");
+    btn.innerText = "Save Semester " + sem + " Changes";
+    btn.disabled = false;
+  }).submitGrades(sem, "Current Status", grades, regNo);
+}
+function fetchLogs() {
+  const container = document.getElementById('logContainer');
+  container.innerHTML = '<div style="text-align:center; padding:20px;">Loading Logs...</div>';
+
+  google.script.run.withSuccessHandler(function(logs) {
+    if (!logs || logs.length === 0) {
+      container.innerHTML = '<p style="text-align:center; padding:20px;">No logs found.</p>';
+      return;
+    }
+
+    let html = `
+      <table style="width:100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+        <thead style="background: #f1f5f9; position: sticky; top: 0;">
+          <tr>
+            <th style="padding:10px;">Time</th>
+            <th style="padding:10px;">Reg No</th>
+            <th style="padding:10px;">Status</th>
+            <th style="padding:10px;">Device</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    // Show newest logs at the top
+    for (let i = logs.length - 1; i >= 0; i--) {
+      const log = logs[i]; // [Time, RegNo, Status, DeviceType]
+      const statusColor = log[2] === "SUCCESS" ? "#16a34a" : "#dc2626";
+      
+      html += `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding:8px; color: #64748b;">${log[0]}</td>
+          <td style="padding:8px; font-weight: 600;">${log[1]}</td>
+          <td style="padding:8px; color: ${statusColor}; font-weight: bold;">${log[2]}</td>
+          <td style="padding:8px; color: #64748b;">${log[3]}</td>
+        </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+  }).getLogsFromServer();
+}
+
+
+window.addEventListener('load', () => {
+  if (window.lucide) lucide.createIcons();
+
+  const savedReg = localStorage.getItem('user_session_reg');
+  const savedDob = localStorage.getItem('user_session_dob');
+
+  // Only try to auto-login if BOTH values exist
+  if (savedReg && savedDob) {
+    const regInput = document.getElementById('regNo');
+    const dobInput = document.getElementById('dob');
+    
+    if (regInput && dobInput) {
+      regInput.value = savedReg;
+      dobInput.value = savedDob;
+      
+      // This triggers your login process automatically
+      login(); 
+    }
+  }
+});
+
+</script>
+
+<div id="adminGradeModal" class="modal-overlay hidden" style="z-index: 9999;">
+  <div class="modal" style="max-width: 90%; max-height: 85vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 id="adminViewStudentName" style="margin: 0; font-size: 16px; color: var(--ks-blue);">Student Grades</h3>
+      <button onclick="closeModal('adminGradeModal')" class="btn-modal-sec" style="width: auto; padding: 5px 10px;">Close</button>
+    </div>
+    <div id="adminStudentGradeContent">
+      <div class="spinner-container"><i data-lucide="loader-2" class="spinner"></i></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
